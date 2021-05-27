@@ -1,4 +1,6 @@
 # Dense Neural Network
+import pandas as pd
+
 from file_handling import file_handling as fh
 from data_handling import data_handling as dh
 import matplotlib.pyplot as plt
@@ -14,9 +16,10 @@ from loguru import logger
 # Globals
 conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
 file_name = 'ETF.csv'
+data_col = 'XACTOMXS30.ST_CLOSE'
 
 
-def create_model(optimizer, hl=1, hu=128):
+def create_model(hl=1, hu=128, optimizer=None):
     model = Sequential()
 
     # Default layer
@@ -49,25 +52,51 @@ if __name__ == '__main__':
     conf = fh.config(conf_file_name)
     raw = fh.read_csv(conf, file_name)
 
-    df = raw['XACTOMXS30.ST_CLOSE'].to_frame()
+    df = raw[data_col].to_frame()
 
-    df['XACTOMXS30.ST_CLOSE'].plot(figsize=(10, 6))
+    ax = df[data_col].plot(figsize=(10, 6), title=data_col)
+    ax.set_ylabel('CLOSE')
     plt.show()
 
     lags = 5
-    data, cols = dh.add_lags(data=df, data_col='XACTOMXS30.ST_CLOSE', lags=lags)
+    data, cols = dh.add_lags(data=df, data_col=data_col, lags=lags)
 
     # Standard optimizer
     optimizer = Adam(learning_rate=0.001)
 
+    # Split the whole data set into training data and test data
+    split = int(len(data) * 0.8)
+    train = data.iloc[:split].copy()
+    test = data.iloc[split:].copy()
+
+    # Mean and standard deviation for all features
+    mu, std = train.mean(), train.std()
+
+    # Normalize training data
+    train_ = (train - mu) / std
+
     set_seeds()
-    model = create_model(optimizer=optimizer, hl=1, hu=128)
-    model.fit(data[cols], data['d'], epochs=50, verbose=False, class_weight=cw(data))
+    model = create_model(optimizer=optimizer,hl=2, hu=128)
+    history = model.fit(train_[cols], train['d'], epochs=50,
+                        verbose=False,
+                        class_weight=cw(train),
+                        shuffle=False,
+                        validation_split=0.2)
 
-    model.evaluate(data[cols], data['d'])
+    # Evaluate in-sample performance
+    logger.info('Evaluation in-sample performance:')
+    model.evaluate(train_[cols], train['d'])
 
-    data['p'] = np.where(model.predict(data[cols]) > 0.5, 1, 0)
+    # Normalize test data set
+    test_ = (test - mu) / std
 
-    print(data['p'].value_counts())
+    # Evaluate out-of-sample performance
+    logger.info('Evaluation out-of-sample performance:')
+    model.evaluate(test_[cols], test['d'])
 
+    test['p'] = np.where(model.predict(test_[cols]) > 0.5, 1, 0)
+    logger.info(test['p'].value_counts())
 
+    res = pd.DataFrame(history.history)
+    res[['accuracy', 'val_accuracy']].plot(figsize=(10, 6), style='--')
+    plt.show()
