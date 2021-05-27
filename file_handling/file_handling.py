@@ -15,6 +15,7 @@ def config(conf_file_name: str) -> SafeConfigParser:
     """
     conf = SafeConfigParser()
     try:
+        # TODO Fix global root directory settings.
         conf.read(conf_file_name)
     except SafeConfigParser:
         logger.error('Config.ini file not found. Aborted.')

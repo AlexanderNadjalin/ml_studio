@@ -1,12 +1,73 @@
 # Dense Neural Network
 from file_handling import file_handling as fh
+from data_handling import data_handling as dh
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+import tensorflow as tf
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import accuracy_score
 from loguru import logger
 
 # Globals
 conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
 file_name = 'ETF.csv'
 
+
+def create_model(optimizer, hl=1, hu=128):
+    model = Sequential()
+
+    # Default layer
+    model.add(Dense(hu, input_dim=len(cols), activation='relu'))
+    for _ in range(hl):
+        # Additional layer
+        model.add(Dense(hu, activation='relu'))
+        # Output layer
+        model.add(Dense(1, activation='sigmoid'))
+        # Loss function
+        model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    return model
+
+
+def cw(df):
+    c0, c1 = np.bincount(df['d'])
+    w0 = (1 / c0) * len(df) / 2
+    w1 = (1 / c1) * len(df) / 2
+    return {0: w0, 1: w1}
+
+
+def set_seeds(seed=1000):
+    # Python numpy and tensorflow random seeds
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+
+
 if __name__ == '__main__':
     conf = fh.config(conf_file_name)
-    data = fh.read_csv(conf, file_name)
+    raw = fh.read_csv(conf, file_name)
+
+    df = raw['XACTOMXS30.ST_CLOSE'].to_frame()
+
+    df['XACTOMXS30.ST_CLOSE'].plot(figsize=(10, 6))
+    plt.show()
+
+    lags = 5
+    data, cols = dh.add_lags(data=df, data_col='XACTOMXS30.ST_CLOSE', lags=lags)
+
+    # Standard optimizer
+    optimizer = Adam(learning_rate=0.001)
+
+    set_seeds()
+    model = create_model(optimizer=optimizer, hl=1, hu=128)
+    model.fit(data[cols], data['d'], epochs=50, verbose=False, class_weight=cw(data))
+
+    model.evaluate(data[cols], data['d'])
+
+    data['p'] = np.where(model.predict(data[cols]) > 0.5, 1, 0)
+
+    print(data['p'].value_counts())
+
 
