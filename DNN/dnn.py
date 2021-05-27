@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import accuracy_score
@@ -19,14 +19,22 @@ file_name = 'ETF.csv'
 data_col = 'XACTOMXS30.ST_CLOSE'
 
 
-def create_model(hl=1, hu=128, optimizer=None):
+def create_model(optimizer, hl=1, hu=128, dropout=True, rate=0.3):
     model = Sequential()
 
     # Default layer
     model.add(Dense(hu, input_dim=len(cols), activation='relu'))
+
+    # Add dropout layer
+    if dropout:
+        model.add(Dropout(rate, seed=1000))
     for _ in range(hl):
         # Additional layer
         model.add(Dense(hu, activation='relu'))
+
+        # Add dropout layer
+        if dropout:
+            model.add(Dropout(rate, seed=1000))
         # Output layer
         model.add(Dense(1, activation='sigmoid'))
         # Loss function
@@ -76,12 +84,12 @@ if __name__ == '__main__':
     train_ = (train - mu) / std
 
     set_seeds()
-    model = create_model(optimizer=optimizer,hl=2, hu=128)
+    model = create_model(optimizer=optimizer, hl=2, hu=128, rate=0.3)
     history = model.fit(train_[cols], train['d'], epochs=50,
                         verbose=False,
                         class_weight=cw(train),
                         shuffle=False,
-                        validation_split=0.2)
+                        validation_split=0.15)
 
     # Evaluate in-sample performance
     logger.info('Evaluation in-sample performance:')
