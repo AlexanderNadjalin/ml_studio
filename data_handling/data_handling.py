@@ -4,29 +4,45 @@ import random
 import tensorflow as tf
 
 
-def add_lags(data: pd.DataFrame,
-             data_col: str,
-             lags: int,
-             window=20):
+def add_features(data: pd.DataFrame,
+                 data_col: str,
+                 feature_list: list,
+                 lags: int,
+                 window: int):
     cols = []
     df = data.copy()
     df.dropna(inplace=True)
-    df['rets'] = np.log(df[data_col] / df[data_col].shift())
-    df['sma'] = df[data_col].rolling(window).mean()
-    df['min'] = df[data_col].rolling(window).min()
-    df['max'] = df[data_col].rolling(window).max()
-    df['mom'] = df['rets'].rolling(window).mean()
-    df['vol'] = df['rets'].rolling(window).std()
+    if 'rets' in feature_list:
+        df['rets'] = np.log(df[data_col] / df[data_col].shift())
+        cols.append('rets')
+    if 'sma' in feature_list:
+        df['sma'] = df[data_col].rolling(window).mean()
+        cols.append('sma')
+    if 'min' in feature_list:
+        df['min'] = df[data_col].rolling(window).min()
+        cols.append('min')
+    if 'max' in feature_list:
+        df['max'] = df[data_col].rolling(window).max()
+        cols.append('max')
+    if 'mom' in feature_list:
+        df['mom'] = df['rets'].rolling(window).mean()
+        cols.append('mom')
+    if 'vol' in feature_list:
+        df['vol'] = df['rets'].rolling(window).std()
+        cols.append('vol')
     df.dropna(inplace=True)
 
     df['d'] = np.where(df['rets'] > 0, 1, 0)
-    features = [data_col, 'rets', 'd', 'sma', 'min', 'max', 'mom', 'vol']
-    for f in features:
-        for lag in range(1, lags + 1):
-            col = f'{f}_lag_{lag}'
-            df[col] = df[f].shift(lag)
-            cols.append(col)
-    df.dropna(inplace=True)
+    features = [data_col]
+    for feat in feature_list:
+        features.append(feat)
+    if lags > 0:
+        for f in features:
+            for lag in range(1, lags + 1):
+                col = f'{f}_lag_{lag}'
+                df[col] = df[f].shift(lag)
+                cols.append(col)
+        df.dropna(inplace=True)
 
     return df, cols
 

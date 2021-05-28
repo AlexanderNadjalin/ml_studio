@@ -10,7 +10,9 @@ from tensorflow.keras.optimizers import Adam
 conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
 file_name = 'ETF.csv'
 data_col = 'XACTOMXS30.ST_CLOSE'
+feature_list = ['rets', 'sma', 'min', 'max', 'mom', 'vol']
 lags = 5
+window = 20
 optimizer = Adam(learning_rate=0.001)
 dropout = True
 regularize = True
@@ -26,10 +28,12 @@ if __name__ == '__main__':
     # Select which column to use
     df = raw[data_col].to_frame()
 
-    # Add lagged features
-    data, cols = dh.add_lags(data=df,
-                             data_col=data_col,
-                             lags=lags)
+    # Add features and lags
+    data, cols = dh.add_features(data=df,
+                                 data_col=data_col,
+                                 feature_list=feature_list,
+                                 lags=lags,
+                                 window=window)
 
     # Split into training and test data
     train, test = dh.split_train_test(data)
