@@ -3,7 +3,7 @@ from file_handling import file_handling as fh
 from data_handling import data_handling as dh
 import rnn_model as rnnm
 import plotter as plt
-from keras.preprocessing.sequence import TimeseriesGenerator
+from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 import numpy as np
 
 # Globals
@@ -40,8 +40,8 @@ if __name__ == '__main__':
     test_ = dh.normalize(test)
 
     # Fit model to training data
-    g = TimeseriesGenerator(train.value,
-                            train['rets'].values,
+    g = TimeseriesGenerator(train,
+                            train['rets'],
                             length=ts_lags,
                             batch_size=batch_size)
 
