@@ -89,4 +89,4 @@ if __name__ == '__main__':
                  test_[cols])
 
     # Plot accuracy
-    plt.accuracy(history)
+    plt.dnn_accuracy(history)

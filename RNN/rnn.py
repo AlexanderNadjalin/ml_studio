@@ -1,8 +1,10 @@
 # Recurrent Neural Network
 from file_handling import file_handling as fh
 from data_handling import data_handling as dh
+import rnn_model as rnnm
 import plotter as plt
 from keras.preprocessing.sequence import TimeseriesGenerator
+import numpy as np
 
 # Globals
 conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
@@ -13,6 +15,7 @@ window = 20
 lags = 0
 ts_lags = 5
 batch_size = 5
+
 
 if __name__ == '__main__':
     # File imports
@@ -45,4 +48,14 @@ if __name__ == '__main__':
     # Set random seeds
     dh.set_seeds()
 
-    model = cre
+    model = rnnm.create_rnn_model(lags=ts_lags)
+    model.fit_generator(g,
+                        epochs=500,
+                        steps_per_epoch=10,
+                        verbose=False)
+    y = rnnm.predict(model, g)
+    data['pred'] = np.nan
+    data['pred'].iloc[ts_lags:] = y.flatten()
+    data.dropna(inplace=True)
+
+    plt.rnn_prediction(data, data_col)
