@@ -7,7 +7,7 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
 
 # Globals
-conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
+conf_file_name = '/config.ini'
 file_name = 'ETF.csv'
 data_col = 'XACTOMXS30.ST_CLOSE'
 feature_list = ['rets', 'sma', 'min', 'max', 'mom', 'vol']

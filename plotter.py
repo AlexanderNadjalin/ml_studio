@@ -16,7 +16,7 @@ def dnn_accuracy(model: Sequential):
     plt.show()
 
 def rnn_prediction(data, data_col):
-    t = data_col + ' RNN prediction'
+    t = data_col + ' rnn prediction'
     data[['rets', 'pred']].iloc[50:100].plot(figsize=(10, 6), style=['b', 'r--'], alpha=0.75, title=t)
     plt.axhline(0, c='grey', ls='--')
     plt.show()

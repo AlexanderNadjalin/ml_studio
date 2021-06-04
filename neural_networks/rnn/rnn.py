@@ -1,13 +1,15 @@
 # Recurrent Neural Network
 from file_handling import file_handling as fh
 from data_handling import data_handling as dh
+from sklearn.metrics import accuracy_score
+from loguru import logger
 import rnn_model as rnnm
 import plotter as plt
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 import numpy as np
 
 # Globals
-conf_file_name = 'C:\\Python projects\\ml_studio\\config.ini'
+conf_file_name = '/config.ini'
 file_name = 'ETF.csv'
 data_col = 'XACTOMXS30.ST_CLOSE'
 features_list = ['rets', 'mom', 'vol']
@@ -36,12 +38,14 @@ if __name__ == '__main__':
     train, test = dh.split_train_test(data)
 
     # Normalize training data
-    train_ = dh.normalize(train)
-    test_ = dh.normalize(test)
+    train = dh.normalize(train)
+    test = dh.normalize(test)
 
-    # Fit model to training data
-    g = TimeseriesGenerator(train,
-                            train['rets'],
+    # Reshape and fit model to training data
+    r = data['rets'].values
+    r = r.reshape((len(r), -1))
+    g = TimeseriesGenerator(r,
+                            r,
                             length=ts_lags,
                             batch_size=batch_size)
 
@@ -49,13 +53,17 @@ if __name__ == '__main__':
     dh.set_seeds()
 
     model = rnnm.create_rnn_model(lags=ts_lags)
-    model.fit_generator(g,
-                        epochs=500,
-                        steps_per_epoch=10,
-                        verbose=False)
+    model.fit(g,
+              epochs=500,
+              steps_per_epoch=10,
+              verbose=False)
     y = rnnm.predict(model, g)
     data['pred'] = np.nan
     data['pred'].iloc[ts_lags:] = y.flatten()
     data.dropna(inplace=True)
 
     plt.rnn_prediction(data, data_col)
+
+    logger.info(accuracy_score(np.sign(data['r']), np.sign(data['pred'])))
+
+

@@ -1,5 +1,6 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import SimpleRNN, LSTM, Dense
+from loguru import logger
 
 
 def create_rnn_model(lags,
@@ -30,6 +31,8 @@ def create_rnn_model(lags,
                       metrics=['accuracy'])
     return model
 
+
+@logger.catch
 def predict(model,
             data):
-    return model.predict(g, verbose=False)
+    return model.predict(data, verbose=False)

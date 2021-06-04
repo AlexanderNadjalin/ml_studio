@@ -1,11 +1,26 @@
+import configparser
+
 from loguru import logger
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 import pandas as pd
 from pathlib import Path
 
 
+class Settings(object):
+    def __init__(self, cfg_path):
+        self.cfg = ConfigParser()
+        self.cfg.read(cfg_path)
+
+    def get_setting(self, section, my_setting):
+        try:
+            ret = self.cfg.get(section, my_setting)
+        except configparser.NoSectionError:
+            ret = '!'
+        return ret
+
+
 @logger.catch
-def config(conf_file_name: str) -> SafeConfigParser:
+def config(conf_file_name: str) -> ConfigParser:
     """
 
     Read config file and return a config object. Used to designate target directories for data and models.
@@ -13,11 +28,11 @@ def config(conf_file_name: str) -> SafeConfigParser:
 
     :return: A ConfigParser object.
     """
-    conf = SafeConfigParser()
+    conf = Settings(cfg_path=conf_file_name)
     try:
         # TODO Fix global root directory settings.
         conf.read(conf_file_name)
-    except SafeConfigParser:
+    except ConfigParser:
         logger.error('Config.ini file not found. Aborted.')
         quit()
     logger.success('I/O info read from file "' + conf_file_name + '".')
@@ -26,7 +41,8 @@ def config(conf_file_name: str) -> SafeConfigParser:
 
 
 @logger.catch
-def read_csv(conf: SafeConfigParser, input_file_name: str) -> pd.DataFrame:
+def read_csv(conf: Settings,
+             input_file_name: str) -> pd.DataFrame:
     """
 
     Read config.ini file. Read specified input .csv file.
@@ -35,7 +51,7 @@ def read_csv(conf: SafeConfigParser, input_file_name: str) -> pd.DataFrame:
     :return: pandas dataframe.
     """
 
-    input_file_directory = Path(conf['input_files']['input_file_directory'])
+    input_file_directory = Path(conf.get_setting('input_files', 'input_file_directory'))
     input_file_path = Path.joinpath(input_file_directory, input_file_name)
 
     raw_data = pd.DataFrame()
