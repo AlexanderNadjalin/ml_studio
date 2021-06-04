@@ -1,4 +1,5 @@
-
+# Neural network Wide and Deep
+import os
 from file_handling import file_handling as fh
 from data_handling import data_handling as dh
 from loguru import logger
@@ -19,6 +20,8 @@ window = 20
 if __name__ == '__main__':
     # File imports
     conf = fh.Settings(cfg_path=conf_file_name)
+    log_dir = conf.get_setting('logs', 'logs_directory')
+    run_log_dir = fh.get_run_logdir(log_dir, del_old_logs=True)
 
     raw = fh.read_csv(conf, file_name)
 
@@ -33,7 +36,7 @@ if __name__ == '__main__':
                                  window=window)
 
     # Split into training and test data
-    X_train_full, X_test, y_train_full, y_test = train_test_split(data.values, data[cols], shuffle=False)
+    X_train_full, X_test, y_train_full, y_test = train_test_split(data.values, data[data_col], shuffle=False)
     X_train, X_valid, y_train, y_valid = train_test_split(X_train_full, y_train_full, shuffle=False)
 
     scaler = StandardScaler()
@@ -43,8 +46,7 @@ if __name__ == '__main__':
 
     input_ = keras.layers.Input(shape=X_train.shape[1:])
     hidden_1 = keras.layers.Dense(30,
-                                  activation='relu'
-                                  )(input_)
+                                  activation='relu')(input_)
     hidden_2 = keras.layers.Dense(30,
                                   activation='relu'
                                   )(hidden_1)
@@ -55,10 +57,18 @@ if __name__ == '__main__':
     model.compile(loss='mse',
                   optimizer=keras.optimizers.SGD(learning_rate=1e-3))
 
-    history = model.fit(X_train, y_train, epochs=20, validation_data=(X_valid, y_valid))
+    tensorboard_cb = keras.callbacks.TensorBoard(run_log_dir, histogram_freq=1)
+    history = model.fit(X_train,
+                        y_train,
+                        epochs=20,
+                        validation_data=(X_valid, y_valid),
+                        callbacks=[tensorboard_cb])
     mse_test = model.evaluate(X_test, y_test)
     X_new = X_test[:3]
     y_pred = model.predict(X_new)
     logger.info(str(y_pred))
+
+    # Start Tensorboard server
+    os.system('tensorboard --logdir=./logs --port=6006')
 
     logger.info('Complete.')

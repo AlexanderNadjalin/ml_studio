@@ -1,5 +1,7 @@
 import configparser
-
+from shutil import rmtree
+import os
+from glob import glob
 from loguru import logger
 from configparser import ConfigParser
 import pandas as pd
@@ -20,24 +22,19 @@ class Settings(object):
 
 
 @logger.catch
-def config(conf_file_name: str) -> ConfigParser:
-    """
+def get_run_logdir(log_dir, del_old_logs=True):
+    if del_old_logs:
+        # Delete old logs
+        pattern = os.path.join(log_dir, "run_*")
 
-    Read config file and return a config object. Used to designate target directories for data and models.
-    Config.ini file is located in project base directory.
+        for item in glob(pattern):
+            if not os.path.isdir(item):
+                continue
+            rmtree(item)
 
-    :return: A ConfigParser object.
-    """
-    conf = Settings(cfg_path=conf_file_name)
-    try:
-        # TODO Fix global root directory settings.
-        conf.read(conf_file_name)
-    except ConfigParser:
-        logger.error('Config.ini file not found. Aborted.')
-        quit()
-    logger.success('I/O info read from file "' + conf_file_name + '".')
-
-    return conf
+    import time
+    run_id = time.strftime('run_%Y_%m_%d-%H_%M_%S')
+    return Path.joinpath(Path(log_dir), run_id)
 
 
 @logger.catch
