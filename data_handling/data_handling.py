@@ -24,9 +24,6 @@ def add_features(data: pd.DataFrame,
     if 'max' in feature_list:
         df['max'] = df[data_col].rolling(window).max()
         cols.append('max')
-    if 'mom' in feature_list:
-        df['mom'] = df['rets'].rolling(window).mean()
-        cols.append('mom')
     if 'vol' in feature_list:
         df['vol'] = df['rets'].rolling(window).std()
         cols.append('vol')

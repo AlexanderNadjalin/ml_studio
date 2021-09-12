@@ -13,7 +13,7 @@ from tensorflow import keras as keras
 conf_file_name = 'C:\\Python_projects\\ml_studio\\config.ini'
 file_name = 'ETF.csv'
 data_col = 'XACTOMXS30.ST_CLOSE'
-feature_list = ['rets', 'sma', 'min', 'max', 'mom', 'vol']
+feature_list = ['rets', 'sma', 'min', 'max', 'vol']
 lags = 0
 window = 20
 
