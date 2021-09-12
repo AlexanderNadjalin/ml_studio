@@ -15,8 +15,17 @@ def dnn_accuracy(model: Sequential):
     ax.set_xlabel('EPOCH')
     plt.show()
 
+
 def rnn_prediction(data, data_col):
     t = data_col + ' rnn prediction'
     data[['rets', 'pred']].iloc[50:100].plot(figsize=(10, 6), style=['b', 'r--'], alpha=0.75, title=t)
     plt.axhline(0, c='grey', ls='--')
     plt.show()
+
+
+def w_and_d_pred(pred, test):
+    df = pd.DataFrame({'Date': test.index, 'Test': test.values})
+    df['Pred'] = pred
+    df[['Test', 'Pred']].plot(figsize=(10, 6), style=['b', 'r'], alpha=0.75, title='Prediction vs. test data')
+    plt.show()
+
